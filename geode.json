@@ -1,0 +1,9 @@
+{
+  "geode": "v2.0.0",
+  "version": "1.0.0",
+  "id": "incrediboxfan1.ai_deco_assistant",
+  "name": "AI Deco Assistant",
+  "developer": "incrediboxFan1",
+  "description": "An AI-powered Deco Assistant",
+  "platforms": ["win"]
+}
