@@ -40,7 +40,7 @@ jobs:
         uses: geode-sdk/build-geode-mod@main
         with:
           combine: true
-          target: ${{ matrix.config.target }}
+          target: ${{ matrix.config.target || '' }}
 
   package:
     name: Package builds
