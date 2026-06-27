@@ -18,9 +18,9 @@
 using namespace geode::prelude;
 using namespace cocos2d;
 
-// ═══════════════════════════════════════════════════════════════════
+// =====================================================================
 //  BASE64
-// ═══════════════════════════════════════════════════════════════════
+// =====================================================================
 
 static const std::string B64 =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -39,9 +39,9 @@ static std::string b64Encode(const unsigned char* d, size_t len) {
     return out;
 }
 
-// ═══════════════════════════════════════════════════════════════════
+// =====================================================================
 //  SCREENSHOT
-// ═══════════════════════════════════════════════════════════════════
+// =====================================================================
 
 struct Snap { std::string b64; bool ok = false; };
 
@@ -67,9 +67,9 @@ static Snap captureEditor() {
     return s;
 }
 
-// ═══════════════════════════════════════════════════════════════════
+// =====================================================================
 //  CONSTANTS
-// ═══════════════════════════════════════════════════════════════════
+// =====================================================================
 
 static constexpr float GD_UNITS_PER_SEC = 311.f;  // Speed 1x
 static constexpr int   CONFIDENCE_WARN  = 70;
@@ -91,15 +91,15 @@ static const std::vector<std::pair<std::string, std::string>> PRESETS = {
     {"NATURE", "enchanted ancient forest - deep emerald greens and earthy browns, firefly glow particles, twisted vine and root silhouettes, warm dappled golden canopy light"},
 };
 
-// ═══════════════════════════════════════════════════════════════════
+// =====================================================================
 //  GEMINI URL
-// ═══════════════════════════════════════════════════════════════════
+// =====================================================================
 
 static const std::string GEMINI_URL =
     "https://generativelanguage.googleapis.com/v1beta/models/"
     "gemini-2.0-flash:generateContent";
 
-// ─── Build per-pass system prompt ────────────────────────────────
+// --- Build per-pass system prompt ---
 
 static std::string buildPassPrompt(int pass, bool ownedOnly,
                                    float secStart, float secEnd,
@@ -110,26 +110,26 @@ static std::string buildPassPrompt(int pass, bool ownedOnly,
     switch (pass) {
         case 0:
             passStr =
-                "═══ PASS 1 — BACKGROUND LAYER ═══\n"
+                "=== PASS 1 - BACKGROUND LAYER ===\n"
                 "Place ONLY large background objects. z_layer MUST be -3.\n"
-                "Scale range: 1.5–4.0. Object count: 15–25.\n"
+                "Scale range: 1.5-4.0. Object count: 15-25.\n"
                 "These are massive atmospheric shapes far behind gameplay.\n"
-                "Sparse placement — these set the mood, not the detail.";
+                "Sparse placement - these set the mood, not the detail.";
             break;
         case 1:
             passStr =
-                "═══ PASS 2 — MIDGROUND LAYER ═══\n"
+                "=== PASS 2 - MIDGROUND LAYER ===\n"
                 "Place ONLY midground detail objects. z_layer MUST be -1.\n"
-                "Scale range: 0.8–2.0. Object count: 20–30.\n"
+                "Scale range: 0.8-2.0. Object count: 20-30.\n"
                 "Fill space between background and gameplay with layered interest.\n"
                 "Denser than pass 1. Avoid covering pass 1 objects entirely.";
             break;
         case 2:
             passStr = std::string(
-                "═══ PASS 3 — FOREGROUND + TRIGGERS ═══\n"
+                "=== PASS 3 - FOREGROUND + TRIGGERS ===\n"
                 "Place small foreground accent objects AND all color/pulse triggers.\n"
-                "z_layer for deco: 1 or 3. Scale: 0.3–1.2. Count: 10–20 deco objects.\n"
-                "ALSO generate 4–8 color triggers and 3–5 pulse triggers.\n"
+                "z_layer for deco: 1 or 3. Scale: 0.3-1.2. Count: 10-20 deco objects.\n"
+                "ALSO generate 4-8 color triggers and 3-5 pulse triggers.\n"
                 "BPM = ") + std::to_string((int)bpm) + ". GD speed = ~311 units/sec.\n" +
                 "Beat interval in units = " + std::to_string((int)beatLen) + ".\n" +
                 "Snap trigger X positions to nearest beat grid (" +
@@ -170,7 +170,7 @@ Keep all decorations at least 30 units away from any gameplay block you see.
 
 )" + passStr + secStr + palStr + R"(
 
-Respond ONLY with raw JSON — absolutely no markdown, no backticks, no explanation text:
+Respond ONLY with raw JSON - absolutely no markdown, no backticks, no explanation text:
 
 {
   "analysis": "one concise sentence describing what you see in the editor",
@@ -197,7 +197,7 @@ Respond ONLY with raw JSON — absolutely no markdown, no backticks, no explanat
 }
 
 KEY RULES:
-  - confidence: your 0–100 certainty about how well you can see the layout
+  - confidence: your 0-100 certainty about how well you can see the layout
   - z_layer must match the current pass instruction above
   - Best deco IDs: 211(glow sq), 1755(circle), 1756(diamond), 1031(small glow),
     467(triangle), 1329-1334(particles), 1616-1620(lens flares), 1/10(blocks)
@@ -207,9 +207,9 @@ KEY RULES:
 )";
 }
 
-// ═══════════════════════════════════════════════════════════════════
+// =====================================================================
 //  CHAT ENTRY
-// ═══════════════════════════════════════════════════════════════════
+// =====================================================================
 
 struct ChatEntry {
     std::string sender;
@@ -217,13 +217,13 @@ struct ChatEntry {
     std::string timestamp;
 };
 
-// ═══════════════════════════════════════════════════════════════════
+// =====================================================================
 //  AI DECO POPUP
-// ═══════════════════════════════════════════════════════════════════
+// =====================================================================
 
 class AIDecoPopup : public FLAlertLayer {
 
-    // ── UI nodes ─────────────────────────────────────────────────
+    // -- UI nodes --
     CCTextInputNode* m_promptInput   = nullptr;
     CCTextInputNode* m_bpmInput      = nullptr;
     CCTextInputNode* m_secStartInput = nullptr;
@@ -232,7 +232,7 @@ class AIDecoPopup : public FLAlertLayer {
     CCLayer*         m_chatLayer     = nullptr;
     CCMenu*          m_actionMenu    = nullptr;
 
-    // ── State ────────────────────────────────────────────────────
+    // -- State --
     float m_chatY         = 0.f;
     bool  m_busy          = false;
     bool  m_ownedOnly     = false;
@@ -243,18 +243,18 @@ class AIDecoPopup : public FLAlertLayer {
     std::string m_currentPrompt;
     std::string m_currentApiKey;
 
-    // ── Object tracking ──────────────────────────────────────────
+    // -- Object tracking --
     std::vector<GameObject*>              m_previewObjects;
     std::vector<GameObject*>              m_lastPlaced;
     std::vector<std::vector<GameObject*>> m_passObjects;  // [pass][objs]
 
-    // ── Chat history ─────────────────────────────────────────────
+    // -- Chat history --
     std::vector<ChatEntry> m_chatHistory;
 
-    // ── Network ──────────────────────────────────────────────────
+    // -- Network --
     EventListener<Task<web::WebResponse, web::WebProgress>> m_listener;
 
-    // ── Dimensions ───────────────────────────────────────────────
+    // -- Dimensions --
     static constexpr float PW     = 460.f;
     static constexpr float PH     = 420.f;
     static constexpr float CHAT_H = 190.f;
@@ -268,9 +268,9 @@ protected:
         return true;
     }
 
-    // ═════════════════════════════════════════════════════════════
+    // =====================================================================
     //  UI BUILD
-    // ═════════════════════════════════════════════════════════════
+    // =====================================================================
 
     void buildUI() {
         // Re-add popup background (FLAlertLayer defaults were cleared)
@@ -314,7 +314,7 @@ protected:
         m_chatLayer->setPosition({8.f, CHAT_H - 8.f});
         clip->addChild(m_chatLayer);
 
-        // ── Preset buttons ──────────────────────────────────────
+        // -- Preset buttons --
         auto* presetMenu = CCMenu::create();
         presetMenu->setPosition({0.f, 0.f});
         m_mainLayer->addChild(presetMenu, 10);
@@ -332,7 +332,7 @@ protected:
             presetMenu->addChild(btn);
         }
 
-        // ── BPM + Section row ────────────────────────────────────
+        // -- BPM + Section row --
         // BPM label + input
         addSmallLabel("BPM:", 22.f, 104.f);
         addInputBG(70.f, 104.f, 50.f);
@@ -359,7 +359,7 @@ protected:
         selBtn->setPosition({285.f, 104.f});
         selMenu->addChild(selBtn);
 
-        // ── Prompt input ─────────────────────────────────────────
+        // -- Prompt input --
         auto* inputBG = CCScale9Sprite::create("square02_001.png");
         inputBG->setContentSize({PW - 120.f, 36.f});
         inputBG->setPosition({(PW-120.f)/2.f + 5.f, 76.f});
@@ -372,7 +372,7 @@ protected:
         m_promptInput->setPosition({(PW-120.f)/2.f + 5.f, 76.f});
         m_mainLayer->addChild(m_promptInput, 6);
 
-        // ── Action buttons ───────────────────────────────────────
+        // -- Action buttons --
         m_actionMenu = CCMenu::create();
         m_actionMenu->setPosition({0.f, 0.f});
         m_mainLayer->addChild(m_actionMenu, 10);
@@ -392,7 +392,7 @@ protected:
         pushChat("AI: Set BPM for beat-aligned triggers. Use SEL for section.", {100,200,220});
     }
 
-    // ── Small UI helpers ──────────────────────────────────────────
+    // -- Small UI helpers --
 
     void addSmallLabel(const char* txt, float x, float y) {
         auto* lbl = CCLabelBMFont::create(txt, "chatFont.fnt");
@@ -418,7 +418,7 @@ protected:
         return inp;
     }
 
-    // ─── Action button layout (normal vs preview-pending) ─────────
+    // -- Action button layout (normal vs preview-pending) --
 
     void buildActionButtons(bool previewPending) {
         m_actionMenu->removeAllChildren();
@@ -484,9 +484,9 @@ protected:
         }
     }
 
-    // ═════════════════════════════════════════════════════════════
+    // =====================================================================
     //  CHAT HELPERS
-    // ═════════════════════════════════════════════════════════════
+    // =====================================================================
 
     void pushChat(const std::string& msg, ccColor3B col = {230,230,230},
                   const std::string& sender = "AI") {
@@ -511,9 +511,9 @@ protected:
         m_statusLabel->setColor(col);
     }
 
-    // ═════════════════════════════════════════════════════════════
+    // =====================================================================
     //  PRESET HANDLER
-    // ═════════════════════════════════════════════════════════════
+    // =====================================================================
 
     void onPreset(CCObject* sender) {
         int idx = static_cast<CCNode*>(sender)->getTag();
@@ -523,9 +523,9 @@ protected:
         setStatus("Preset loaded! Hit GO when ready.", {100,255,200});
     }
 
-    // ═════════════════════════════════════════════════════════════
+    // =====================================================================
     //  USE SELECTION (reads selected objects' X bounds)
-    // ═════════════════════════════════════════════════════════════
+    // =====================================================================
 
     void onUseSelection(CCObject*) {
         auto* lel = LevelEditorLayer::get();
@@ -565,9 +565,9 @@ protected:
                   {100,255,200});
     }
 
-    // ═════════════════════════════════════════════════════════════
+    // =====================================================================
     //  TOGGLES
-    // ═════════════════════════════════════════════════════════════
+    // =====================================================================
 
     void onToggleOwned(CCObject*) {
         m_ownedOnly = !m_ownedOnly;
@@ -580,14 +580,14 @@ protected:
     void onTogglePreview(CCObject*) {
         m_previewMode = !m_previewMode;
         buildActionButtons(false);
-        pushChat(m_previewMode ? "Preview ON — confirm before finalizing"
-                               : "Preview OFF — instant placement",
+        pushChat(m_previewMode ? "Preview ON - confirm before finalizing"
+                               : "Preview OFF - instant placement",
                  {200,200,100}, "SYS");
     }
 
-    // ═════════════════════════════════════════════════════════════
-    //  MAIN SEND — starts 3-pass pipeline
-    // ═════════════════════════════════════════════════════════════
+    // =====================================================================
+    //  MAIN SEND - starts 3-pass pipeline
+    // =====================================================================
 
     void onSend(CCObject*) {
         if (m_busy) { setStatus("Still thinking...", {255,180,50}); return; }
@@ -636,13 +636,13 @@ protected:
         runPass(0);
     }
 
-    // ═════════════════════════════════════════════════════════════
+    // =====================================================================
     //  MULTI-PASS RUNNER
-    // ═════════════════════════════════════════════════════════════
+    // =====================================================================
 
     void runPass(int pass) {
         static const char* passNames[] = {"Background", "Midground", "Foreground+Triggers"};
-        setStatus(fmt::format("Pass {}/3: {} — screenshotting...",
+        setStatus(fmt::format("Pass {}/3: {} - screenshotting...",
                   pass+1, passNames[pass]), {180,130,255});
         pushChat(fmt::format("AI: Pass {}/3 ({}). Capturing fresh screenshot...",
                   pass+1, passNames[pass]), {160,180,255});
@@ -661,16 +661,16 @@ protected:
                 return;
             }
 
-            setStatus(fmt::format("Pass {}/3 — asking Gemini Vision...", pass+1),
+            setStatus(fmt::format("Pass {}/3 - asking Gemini Vision...", pass+1),
                       {140,120,255});
             sendToGemini(pass, snap.b64);
 
         }, 0.05f, fmt::format("pass_snap_{}", pass).c_str());
     }
 
-    // ═════════════════════════════════════════════════════════════
+    // =====================================================================
     //  GEMINI API CALL
-    // ═════════════════════════════════════════════════════════════
+    // =====================================================================
 
     void sendToGemini(int pass, const std::string& imgB64) {
         std::string sysPrompt = buildPassPrompt(
@@ -724,9 +724,9 @@ protected:
         m_listener = req.post(GEMINI_URL + "?key=" + m_currentApiKey);
     }
 
-    // ═════════════════════════════════════════════════════════════
+    // =====================================================================
     //  RESPONSE HANDLER
-    // ═════════════════════════════════════════════════════════════
+    // =====================================================================
 
     void handlePassResponse(int pass, const std::string& raw, int code) {
         if (code != 200 || raw.empty()) {
@@ -758,7 +758,7 @@ protected:
         auto start = jsonText.find('{');
         auto end   = jsonText.rfind('}');
         if (start == std::string::npos || end == std::string::npos || end <= start) {
-            pushChat(fmt::format("AI: Pass {} format issue — skipping.", pass+1),
+            pushChat(fmt::format("AI: Pass {} format issue - skipping.", pass+1),
                      {255,150,80});
             proceedAfterPass(pass);
             return;
@@ -772,24 +772,24 @@ protected:
             return;
         }
 
-        // ── Confidence check ──────────────────────────────────────
+        // -- Confidence check --
         int confidence = deco.unwrap()["confidence"].asInt().unwrap_or(100);
         if (confidence < CONFIDENCE_WARN) {
             pushChat(fmt::format(
-                "AI: Low confidence ({}%) — layout not fully visible. "
+                "AI: Low confidence ({}%) - layout not fully visible. "
                 "Results may clip gameplay. Consider retrying.",
                 confidence), {255,220,50});
             setStatus(fmt::format("Caution: {}% confidence", confidence), {255,200,50});
         }
 
-        // ── Show analysis ─────────────────────────────────────────
+        // -- Show analysis --
         auto analysis = deco.unwrap()["analysis"].asString().unwrap_or("");
         if (!analysis.empty())
             pushChat(fmt::format("[P{}] {}", pass+1, analysis), {150,255,200});
 
-        // ── Place objects ─────────────────────────────────────────
+        // -- Place objects --
         int placed = applyPassObjects(deco.unwrap(), pass);
-        pushChat(fmt::format("AI: Pass {}/3 done — {} objects.", pass+1, placed),
+        pushChat(fmt::format("AI: Pass {}/3 done - {} objects.", pass+1, placed),
                  {100,255,180});
 
         proceedAfterPass(pass);
@@ -821,7 +821,7 @@ protected:
                 pushChat("AI: CONFIRM to keep, REJECT to remove all.", {255,230,80});
 
             } else {
-                // Instant — finalize immediately
+                // Instant - finalize immediately
                 m_lastPlaced.clear();
                 for (auto& passVec : m_passObjects)
                     for (auto* obj : passVec)
@@ -830,7 +830,7 @@ protected:
                 int total = (int)m_lastPlaced.size();
                 setStatus(fmt::format("Done! {} objects placed across 3 layers.", total),
                           {100,255,160});
-                pushChat(fmt::format("AI: Complete! {} objects — bg/mid/fg layers done.",
+                pushChat(fmt::format("AI: Complete! {} objects - bg/mid/fg layers done.",
                          total), {100,255,180});
             }
 
@@ -840,9 +840,9 @@ protected:
         }
     }
 
-    // ═════════════════════════════════════════════════════════════
+    // =====================================================================
     //  APPLY PASS OBJECTS
-    // ═════════════════════════════════════════════════════════════
+    // =====================================================================
 
     int applyPassObjects(const matjson::Value& data, int pass) {
         auto* editor = LevelEditorLayer::get();
@@ -851,7 +851,7 @@ protected:
         int count = 0;
         float beatLen = GD_UNITS_PER_SEC * 60.f / m_bpm;
 
-        // ── Deco objects ──────────────────────────────────────────
+        // -- Deco objects --
         if (data.contains("objects")) {
             auto arr = data["objects"].asArray();
             if (arr.is_ok()) {
@@ -890,7 +890,7 @@ protected:
             }
         }
 
-        // ── Triggers (pass 2 only) ────────────────────────────────
+        // -- Triggers (pass 2 only) --
         if (pass == 2 && data.contains("triggers")) {
             auto arr = data["triggers"].asArray();
             if (arr.is_ok()) {
@@ -915,9 +915,9 @@ protected:
         return count;
     }
 
-    // ═════════════════════════════════════════════════════════════
+    // =====================================================================
     //  PREVIEW CONFIRM / REJECT
-    // ═════════════════════════════════════════════════════════════
+    // =====================================================================
 
     void onConfirmPreview(CCObject*) {
         for (auto* obj : m_previewObjects)
@@ -947,9 +947,9 @@ protected:
         pushChat(fmt::format("AI: Removed {} preview objects.", count), {255,150,100});
     }
 
-    // ═════════════════════════════════════════════════════════════
+    // =====================================================================
     //  UNDO LAST PLACEMENT
-    // ═════════════════════════════════════════════════════════════
+    // =====================================================================
 
     void onUndo(CCObject*) {
         if (m_lastPlaced.empty()) {
@@ -966,9 +966,9 @@ protected:
         pushChat(fmt::format("AI: Undone. {} objects removed.", count), {255,180,100});
     }
 
-    // ═════════════════════════════════════════════════════════════
+    // =====================================================================
     //  EXPORT CHAT LOG
-    // ═════════════════════════════════════════════════════════════
+    // =====================================================================
 
     void onExportChat(CCObject*) {
         if (m_chatHistory.empty()) {
@@ -983,10 +983,10 @@ protected:
             setStatus("Couldn't write log file!", {255,80,80}); return;
         }
 
-        f << "╔══════════════════════════════════╗\n";
-        f << "║   AI Deco Assistant  —  Chat Log ║\n";
-        f << "║         by D.M                   ║\n";
-        f << "╚══════════════════════════════════╝\n\n";
+        f << "=====================================\n";
+        f << "    AI Deco Assistant  -  Chat Log  \n";
+        f << "           by D.M                   \n";
+        f << "=====================================\n\n";
 
         for (auto& e : m_chatHistory)
             f << "[" << e.timestamp << "] " << e.sender << ": " << e.message << "\n";
@@ -1006,9 +1006,9 @@ public:
     }
 };
 
-// ═══════════════════════════════════════════════════════════════════
-//  EDITOR UI HOOK — adds the AI button
-// ═══════════════════════════════════════════════════════════════════
+// =====================================================================
+//  EDITOR UI HOOK - adds the AI button
+// =====================================================================
 
 class $modify(MyEditorUI, EditorUI) {
     bool init(LevelEditorLayer* lel) {
