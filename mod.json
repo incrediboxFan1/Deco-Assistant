@@ -1,7 +1,7 @@
 {
   "geode": "5.7.1",
   "gd": {
-    "windows": "2.2081"
+    "win": "2.2081"
   },
   "id": "dm.ai-deco-assistant",
   "name": "AI Deco Assistant",
