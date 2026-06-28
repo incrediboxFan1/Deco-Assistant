@@ -1,0 +1,41 @@
+name: Build Geode Mod
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Geode mod
+        uses: ./.github/actions/build-geode
+        with:
+          sdk: given
+          cli: latest
+          configure-args: ""
+          build-args: ""
+          build-config: Release
+          path: ./
+          combine: false
+          target: ""
+          bindings: "geode-sdk/bindings"
+          bindings-ref: ""
+          android-min-sdk: 23
+          android-ndk-version: ""
+          ccache-variant: default
+          use-cpm-cache: true
+          export-pdb: false
+          export-debug: false
+          use-lto: true
+          bundle-pdb: false
+          export-symbols: false
